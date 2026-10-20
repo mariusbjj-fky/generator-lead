@@ -1,0 +1,7 @@
+# Lead data stays local (business contact data, Apify raw output, ONRC cache)
+data/
+web/data/
+# Python
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead Viewer</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #667080; --line: #e3e6eb;
+    --accent: #2457c5; --high: #1f8a4c; --high-bg: #e3f4ea; --med: #9a6a00; --med-bg: #fdf3d8;
+    --low: #5c6470; --low-bg: #eef0f3; --bar: #2457c5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418; --panel: #191d23; --text: #e6e9ee; --muted: #9aa3af; --line: #2a3038;
+      --accent: #7aa2ff; --high: #5fd08f; --high-bg: #18352a; --med: #f0c35a; --med-bg: #3a2f14;
+      --low: #aab1bb; --low-bg: #262b33; --bar: #7aa2ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 20px 24px 8px; display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; }
+  h1 { font-size: 20px; margin: 0; }
+  .meta { color: var(--muted); font-size: 13px; }
+  main { padding: 8px 24px 40px; max-width: 1400px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 8px 0 16px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+          cursor: pointer; text-align: left; color: inherit; font: inherit; }
+  .tile.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .tile b { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+  .tile span { color: var(--muted); font-size: 12px; }
+  .bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .card h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .bar { display: grid; grid-template-columns: 130px 1fr 34px; gap: 8px; align-items: center; margin: 4px 0; font-size: 13px; }
+  .bar i { display: block; height: 10px; border-radius: 3px; background: var(--bar); }
+  .bar em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  input, select, button.btn { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line);
+          border-radius: 8px; padding: 7px 10px; }
+  input[type=search] { min-width: 220px; flex: 1; }
+  button.btn { cursor: pointer; }
+  .tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 900px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; cursor: pointer; white-space: nowrap; position: sticky; top: 0; background: var(--panel); }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .HIGH { color: var(--high); background: var(--high-bg); }
+  .MEDIUM { color: var(--med); background: var(--med-bg); }
+  .LOW, .REVIEW { color: var(--low); background: var(--low-bg); }
+  .small { color: var(--muted); font-size: 12px; }
+  a { color: var(--accent); }
+  dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text);
+           width: min(820px, calc(100vw - 32px)); max-height: 85vh; padding: 0; }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  .dlg-head { display: flex; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+  .dlg-body { padding: 8px 18px 18px; }
+  .kv { display: grid; grid-template-columns: 190px 1fr; gap: 4px 12px; font-size: 13px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; word-break: break-word; }
+  .drop { border: 2px dashed var(--line); border-radius: 12px; padding: 40px 20px; text-align: center; color: var(--muted); margin: 20px 0; }
+  .drop.over { border-color: var(--accent); color: var(--text); }
+  .tabs { display: flex; gap: 6px; margin: 4px 0 12px; }
+  .tabs button { background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 12px; cursor: pointer; color: var(--muted); font: inherit; }
+  .tabs button.on { border-color: var(--line); background: var(--panel); color: var(--text); font-weight: 600; }
+  pre { white-space: pre-wrap; font-size: 12.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; }
+  @media (max-width: 640px) { header, main { padding-left: 16px; padding-right: 16px; } .kv { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lead Viewer</h1>
+  <span class="meta" id="meta">No data loaded</span>
+  <label class="btn" style="margin-left:auto">
+    <input type="file" id="file" accept=".json" hidden>
+    <span class="small" style="cursor:pointer;text-decoration:underline">Open leads.json…</span>
+  </label>
+</header>
+<main>
+  <div id="empty" class="drop">
+    Drop a <b>leads.json</b> here (made by <code>python run.py web</code> or <code>export</code>),<br>
+    or put it at <code>web/data/leads.json</code>. The file stays in your browser; nothing is uploaded.
+  </div>
+  <div id="app" hidden>
+    <div class="tabs">
+      <button data-tab="leads" class="on">Leads</button>
+      <button data-tab="summary">Summary</button>
+      <button data-tab="log">Run Log</button>
+    </div>
+    <section data-panel="leads">
+      <div class="tiles" id="tiles"></div>
+      <div class="bars">
+        <div class="card"><h3>Leads by industry</h3><div id="byIndustry"></div></div>
+        <div class="card"><h3>Score distribution</h3><div id="byScore"></div></div>
+        <div class="card"><h3>Top cities</h3><div id="byCity"></div></div>
+      </div>
+      <div class="filters">
+        <input type="search" id="q" placeholder="Search name, city, CUI, email…">
+        <select id="fIndustry"><option value="">All industries</option></select>
+        <select id="fPriority"><option value="">All priorities</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option></select>
+        <button class="btn" id="csv">Download CSV (filtered)</button>
+      </div>
+      <div class="small" id="count" style="margin:0 0 6px"></div>
+      <div class="tablewrap"><table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table></div>
+    </section>
+    <section data-panel="summary" hidden><pre id="summary"></pre></section>
+    <section data-panel="log" hidden>
+      <div class="tablewrap"><table><thead><tr id="logHead"></tr></thead><tbody id="logBody"></tbody></table></div>
+    </section>
+  </div>
+</main>
+<dialog id="dlg">
+  <div class="dlg-head"><b id="dlgTitle"></b><button class="btn" onclick="dlg.close()">Close</button></div>
+  <div class="dlg-body"><dl class="kv" id="dlgBody"></dl></div>
+</dialog>
+<script>
+const CATS = [
+  ["", "All leads"], ["1", "Cat 1 · New businesses"], ["2A", "Cat 2A · Inactive, no ads"],
+  ["2B", "Cat 2B · Inactive, with ads"], ["3", "Cat 3 · No website"], ["review", "Needs review"],
+];
+const COLS = [
+  ["priority", "Priority"], ["score", "Score"], ["categories", "Cat"], ["name", "Business"],
+  ["industry_label", "Industry"], ["city", "City"], ["website", "Website"], ["last_activity_date", "Last activity"],
+  ["meta_ads_status", "Meta ads"], ["contact", "Contact"],
+];
+const LABELS = {
+  lead_id: "Lead ID", legal_name: "Legal name", brand_name: "Brand name", industry_label: "Industry",
+  caen_code: "CAEN code", caen_version: "CAEN version", city: "City", county: "County (județ)",
+  registration_date: "Registration date", cui: "CUI/CIF", verification_status: "Registry verification",
+  website_url: "Website URL", website_status: "Website status", website_note: "Website note",
+  gbp_url: "Google Business Profile", gbp_status: "GBP status", gbp_reviews: "GBP reviews", gbp_rating: "GBP rating",
+  facebook_url: "Facebook", facebook_last_post: "Facebook last post", instagram_url: "Instagram",
+  instagram_last_post: "Instagram last post", tiktok_url: "TikTok", tiktok_last_post: "TikTok last post",
+  last_activity_date: "Last activity (all platforms)", days_since_activity: "Days since activity",
+  activity_status: "Activity status", meta_ads_status: "Meta Ads status", meta_ads_count: "Active ads",
+  ad_library_url: "Ad Library URL", email: "Public business email", email_source: "Email source",
+  phone: "Public business phone", phone_source: "Phone source", categories: "Categories", score: "Score",
+  priority: "Priority", score_breakdown: "Score explanation", conflicts: "Conflicts", notes: "Notes",
+  identity_evidence: "Identity evidence", sources: "Source URLs", checked_at: "Checked at",
+};
+let DATA = null, cat = "", sortKey = "score", sortDir = -1;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const link = u => /^https?:\/\//.test(u || "") ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 48))}</a>` : esc(u);
+const name = l => l.brand_name || l.legal_name;
+const cityName = c => String(c || "").replace(/ş/g, "ș").replace(/Ş/g, "Ș").replace(/ţ/g, "ț").replace(/Ţ/g, "Ț").replace(/^(Municipiul|Mun\.|Ora[șş]ul|Ora[șş])\s+/i, "").replace(/\s+Sectorul\s+\d/i, "");
+const cats = l => (l.categories || "").split(",").map(s => s.trim()).filter(Boolean);
+const website = l => l.website_status === "NONE" ? "NONE" : (l.website_url ? l.website_url : (l.website_status === "NOT_FOUND_IN_SOURCES" ? "NOT FOUND" : ""));
+
+function load(data) {
+  DATA = data;
+  $("empty").hidden = true; $("app").hidden = false;
+  $("meta").textContent = `${data.leads.length} leads · generated ${String(data.generated_at).replace("T", " ").slice(0, 16)}`;
+  const inds = [...new Set(data.leads.map(l => l.industry_label).filter(Boolean))].sort();
+  $("fIndustry").innerHTML = '<option value="">All industries</option>' + inds.map(i => `<option>${esc(i)}</option>`).join("");
+  $("summary").textContent = (data.summary || []).join("\n");
+  const lc = data.run_log && data.run_log.length ? Object.keys(data.run_log[0]) : [];
+  $("logHead").innerHTML = lc.map(c => `<th>${esc(c)}</th>`).join("");
+  $("logBody").innerHTML = (data.run_log || []).map(r => `<tr>${lc.map(c => `<td>${esc(r[c])}</td>`).join("")}</tr>`).join("");
+  render();
+}
+
+function inCat(l, c) { return c === "review" ? l.needs_review : (c ? cats(l).includes(c) : !!l.categories); }
+
+function filtered() {
+  const q = $("q").value.trim().toLowerCase(), ind = $("fIndustry").value, pr = $("fPriority").value;
+  return DATA.leads.filter(l => inCat(l, cat)
+    && (!ind || l.industry_label === ind) && (!pr || l.priority === pr)
+    && (!q || [l.legal_name, l.brand_name, l.city, l.county, l.cui, l.email, l.phone].join(" ").toLowerCase().includes(q)));
+}
+
+function val(l, k) {
+  if (k === "name") return name(l) || "";
+  if (k === "website") return website(l);
+  if (k === "contact") return l.email || l.phone || "";
+  if (k === "score") return l.score ?? -1;
+  return l[k] ?? "";
+}
+
+function bars(el, pairs) {
+  const max = Math.max(1, ...pairs.map(p => p[1]));
+  el.innerHTML = pairs.length ? pairs.map(([k, v]) =>
+    `<div class="bar"><span>${esc(k)}</span><i style="width:${(v / max * 100).toFixed(1)}%"></i><em>${v}</em></div>`).join("")
+    : '<div class="small">No data</div>';
+}
+
+function countBy(list, f) {
+  const m = new Map();
+  list.forEach(l => { const k = f(l); if (k) m.set(k, (m.get(k) || 0) + 1); });
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+function render() {
+  $("tiles").innerHTML = CATS.map(([c, label]) =>
+    `<button class="tile ${c === cat ? "on" : ""}" data-cat="${c}"><b>${DATA.leads.filter(l => inCat(l, c)).length}</b><span>${label}</span></button>`).join("");
+  const rows = filtered().sort((a, b) => {
+    const x = val(a, sortKey), y = val(b, sortKey);
+    return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * sortDir;
+  });
+  bars($("byIndustry"), countBy(rows, l => l.industry_label));
+  bars($("byScore"), ["70–100", "40–69", "0–39"].map((b, i) =>
+    [b, rows.filter(l => l.score != null && (i === 0 ? l.score >= 70 : i === 1 ? l.score >= 40 && l.score < 70 : l.score < 40)).length]));
+  bars($("byCity"), countBy(rows, l => cityName(l.city)).slice(0, 6));
+  $("count").textContent = `${rows.length} shown`;
+  $("thead").innerHTML = COLS.map(([k, h]) => `<th data-k="${k}">${h}${k === sortKey ? (sortDir < 0 ? " ↓" : " ↑") : ""}</th>`).join("");
+  $("tbody").innerHTML = rows.map((l, i) => `<tr data-id="${esc(l.lead_id)}">
+    <td>${l.priority ? `<span class="pill ${l.priority}">${l.priority}</span>` : '<span class="pill REVIEW">REVIEW</span>'}</td>
+    <td class="num">${l.score ?? ""}</td>
+    <td>${esc(l.categories)}</td>
+    <td><b>${esc(name(l))}</b>${l.brand_name && l.legal_name ? `<div class="small">${esc(l.legal_name)}</div>` : ""}</td>
+    <td>${esc(l.industry_label)}</td>
+    <td>${esc(l.city)}<div class="small">${esc(l.county)}</div></td>
+    <td>${link(website(l))}<div class="small">${esc(l.website_status)}</div></td>
+    <td style="white-space:nowrap">${esc(l.last_activity_date)}${l.days_since_activity ? `<div class="small">${esc(l.days_since_activity)} days</div>` : ""}</td>
+    <td>${esc(l.meta_ads_status)}</td>
+    <td>${esc(l.email)}${l.email && l.phone ? "<br>" : ""}${esc(l.phone)}</td></tr>`).join("")
+    || `<tr><td colspan="${COLS.length}" class="small">No leads match.</td></tr>`;
+}
+
+function detail(id) {
+  const l = DATA.leads.find(x => x.lead_id === id);
+  if (!l) return;
+  $("dlgTitle").textContent = `${name(l)} · ${l.lead_id}`;
+  $("dlgBody").innerHTML = Object.entries(LABELS).filter(([k]) => l[k] !== "" && l[k] != null)
+    .map(([k, label]) => {
+      let v = l[k];
+      if (k === "sources") v = String(v).split(" | ").map(s => esc(s).replace(/(https?:\/\/[^\s)]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')).join("<br>");
+      else v = /_url$/.test(k) ? link(v) : esc(v);
+      return `<dt>${label}</dt><dd>${v}</dd>`;
+    }).join("");
+  $("dlg").showModal();
+}
+
+function toCSV(rows) {
+  const keys = Object.keys(LABELS);
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  return "﻿" + [keys.map(k => q(LABELS[k])).join(",")].concat(rows.map(l => keys.map(k => q(l[k])).join(","))).join("\r\n");
+}
+
+document.addEventListener("click", e => {
+  const t = e.target.closest(".tile"); if (t) { cat = t.dataset.cat; render(); return; }
+  const th = e.target.closest("th[data-k]"); if (th) { const k = th.dataset.k; sortDir = k === sortKey ? -sortDir : (k === "score" ? -1 : 1); sortKey = k; render(); return; }
+  const tr = e.target.closest("tbody tr[data-id]"); if (tr && !e.target.closest("a")) { detail(tr.dataset.id); return; }
+  const tab = e.target.closest(".tabs button");
+  if (tab) {
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b === tab));
+    document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== tab.dataset.tab);
+  }
+});
+["q", "fIndustry", "fPriority"].forEach(id => $(id).addEventListener("input", render));
+$("csv").addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([toCSV(filtered())], {type: "text/csv"}));
+  a.download = "leads_filtered.csv"; a.click();
+});
+function readFile(f) {
+  const r = new FileReader();
+  r.onload = () => { try { load(JSON.parse(r.result)); } catch (err) { alert("Not a valid leads.json: " + err.message); } };
+  r.readAsText(f);
+}
+$("file").addEventListener("change", e => e.target.files[0] && readFile(e.target.files[0]));
+const drop = $("empty");
+["dragover", "dragenter"].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+document.addEventListener("dragleave", () => drop.classList.remove("over"));
+document.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); e.dataTransfer.files[0] && readFile(e.dataTransfer.files[0]); });
+fetch("data/leads.json", {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(d => d && load(d)).catch(() => {});
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+{
+  "data_dir": "data",
+  "timezone": "Europe/Bucharest",
+  "user_agent": "Mozilla/5.0 (compatible; LeadResearch/1.0; public business presence check)",
+
+  "windows": {
+    "new_business_days": 7,
+    "inactive_days": 60,
+    "onrc_cache_days": 120,
+    "recheck_days": 7
+  },
+
+  "politeness": {
+    "min_delay_same_domain_s": 4,
+    "max_retries_on_block": 2,
+    "backoff_base_s": 10,
+    "stop_source_after_blocks": 3,
+    "respect_robots_txt": true
+  },
+
+  "industries": {
+    "dental": {
+      "label": "Dental clinic",
+      "score": 20,
+      "keywords": ["dentar", "dental", "stomatolog", "ortodont", "implant dentar", "dent "],
+      "caen_strict": ["8623"],
+      "caen_with_keyword": ["8622", "8690", "8699"]
+    },
+    "aesthetic": {
+      "label": "Aesthetic / cosmetic clinic",
+      "score": 20,
+      "keywords": ["estetic", "esthetic", "aesthetic", "cosmetic", "laser", "dermato", "beauty clinic", "beauty medical", "beauty center medical", "med spa", "medical spa", "medicina estetica", "skin clinic"],
+      "caen_strict": [],
+      "caen_with_keyword": ["9602", "9604", "9622", "9623", "8622", "8690", "8699"]
+    },
+    "optics": {
+      "label": "Optical store / optometry",
+      "score": 12,
+      "keywords": ["optic", "optica", "optometr", "ochelari", "lentile", "eyewear"],
+      "caen_strict": [],
+      "caen_with_keyword": ["4778", "4774", "8690", "8699", "8622"]
+    },
+    "medical": {
+      "label": "Medical clinic",
+      "score": 8,
+      "keywords": ["clinica", "medical", "medic", "policlinica", "cabinet medical", "centrul medical", "centru medical", "health", "sanatate"],
+      "caen_strict": ["8621", "8622"],
+      "caen_with_keyword": ["8690", "8691", "8695", "8699"]
+    }
+  },
+  "industry_priority": ["dental", "aesthetic", "optics", "medical"],
+
+  "scoring": {
+    "new_business": 25,
+    "no_website": 20,
+    "inactive_no_ads": 15,
+    "inactive_with_ads": 20,
+    "public_contact": 10,
+    "large_city": 5,
+    "high_threshold": 70,
+    "medium_threshold": 40
+  },
+
+  "large_cities": [
+    "bucuresti", "sector 1", "sector 2", "sector 3", "sector 4", "sector 5", "sector 6",
+    "cluj-napoca", "cluj napoca", "timisoara", "iasi", "constanta", "brasov", "craiova",
+    "galati", "oradea", "ploiesti", "sibiu", "arad", "pitesti", "bacau", "targu mures",
+    "voluntari", "otopeni", "pipera", "floresti", "chiajna", "bragadiru", "popesti-leordeni",
+    "corbeanca", "snagov", "mogosoaia", "baneasa"
+  ],
+
+  "maps": {
+    "areas": ["București"],
+    "search_terms": {
+      "dental": ["clinică stomatologică", "cabinet stomatologic", "clinică dentară"],
+      "aesthetic": ["clinică estetică", "clinică medicină estetică", "epilare definitivă laser"],
+      "optics": ["optică medicală", "cabinet optometrie", "magazin ochelari"],
+      "medical": ["clinică medicală", "policlinică", "cabinet medical"]
+    },
+    "category_words": {
+      "dental": ["stomatolog", "dentist", "dental", "ortodon", "implant"],
+      "aesthetic": ["estetic", "aesthetic", "cosmetic", "laser", "dermato", "beauty", "skin", "spa"],
+      "optics": ["optic", "optică", "ochelari", "optometr", "eyewear", "lentile"],
+      "medical": ["clinic", "clinică", "medical", "medic", "policlinic", "doctor", "health"]
+    }
+  },
+
+  "limits": {
+    "max_usd_per_run": 1.0,
+    "max_usd_per_week": 5.0,
+    "max_maps_places_per_run": 60
+  },
+
+  "apify": {
+    "maps_actor": "compass~crawler-google-places",
+    "instagram_actor": "apify~instagram-profile-scraper",
+    "facebook_posts_actor": "apify~facebook-posts-scraper",
+    "tiktok_actor": "clockworks~tiktok-profile-scraper",
+    "ads_actor": "apify~facebook-ads-scraper"
+  },
+
+  "sources": {
+    "ckan_search": "https://data.gov.ro/api/3/action/package_search",
+    "anaf_api": "https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva",
+    "listafirme_search": "https://listafirme.ro/search.asp?q={q}",
+    "onrc_portal": "https://myportal.onrc.ro/home",
+    "monitorul_oficial": "https://monitoruloficial.ro",
+    "ad_library": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=RO"
+  }
+}
